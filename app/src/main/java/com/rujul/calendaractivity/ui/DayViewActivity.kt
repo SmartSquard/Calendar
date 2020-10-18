@@ -21,23 +21,23 @@ class DayViewActivity : AppCompatActivity() {
         var calendar = Calendar.getInstance()
         calendar.set(Calendar.MINUTE, 15)
         event.startTime = calendar.time
-        // 1315 -> 1330
-        calendar.add(Calendar.HOUR_OF_DAY, 2)
+
+//        calendar.add(Calendar.HOUR_OF_DAY, 2)
         calendar.set(Calendar.MINUTE, 45)
         event.endTime = calendar.time
         event.name = "Event test"
 
         dayView.addEvents(event)
 
-//        calendar = Calendar.getInstance()
-//        calendar.set(Calendar.MINUTE, 30)
-//        calendar.add(Calendar.HOUR_OF_DAY, 6)
-//        event.startTime = calendar.time
-//        calendar.add(Calendar.MINUTE, 60)
-//        event.endTime = calendar.time
-//        event.name = "Event 2"
-//
-//        dayView.addEvents(event)
+        calendar = Calendar.getInstance()
+        calendar.set(Calendar.MINUTE, 30)
+        calendar.add(Calendar.HOUR_OF_DAY, 1)
+        event.startTime = calendar.time
+        calendar.add(Calendar.MINUTE, 60)
+        event.endTime = calendar.time
+        event.name = "Event 2"
+
+        dayView.addEvents(event)
 
 
     }

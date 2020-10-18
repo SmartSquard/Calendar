@@ -23,8 +23,6 @@ class EventDragHandler(val mEventDragListener: EventDragListener) : View.OnDragL
 
     public interface EventDragListener {
 
-        fun eventDragged(oldSlotId: String, newSlotId: String, event: Event)
-
         fun eventChange(sourceTag: String, targetTag: String)
 
     }

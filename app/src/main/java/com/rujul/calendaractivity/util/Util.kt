@@ -51,22 +51,29 @@ object Util {
         return numberFormat.format(result)
     }
 
-    fun isValidSlot(event: Event) {
-        val isValid = true
-        val eventStartTime = event.getStartTimeId()
-        val eventEndTime = event.getEndTimeId()
+    fun isValidSlot(event: Event, list: List<CalendarModel>): Boolean {
+        var isValid = true
+        var eventStarted = false
 
-        val daysMap = getDaysMap();
-        val startCalendarModel = daysMap.get(eventStartTime)
-        for (calendarModel in daysMap.entries) {
-            calendarModel.key
+        for (calendarModel in list) {
+
+            val slotId = calendarModel.slotId
+            if (event.getStartTimeId().equals(slotId)) {
+                eventStarted = true
+            }
+
+            if (eventStarted && calendarModel.event != null) {
+                isValid = false
+                break
+            }
+
+            if(event.getEndTimeId().equals(slotId)){
+                eventStarted = false
+            }
+
         }
-//        val calendar = getDaysMap().get(eventStartTime)
-//        for (calendarModel in getDayList()){
-//            val startTimeId = calendarModel.event.getStartTimeId()
-//            val endTimeId = calendarModel.event.getStartTimeId()
-////            if(event.getStartTimeId() == event)
-//        }
+
+        return isValid
     }
 
     fun getDaysMap(): HashMap<String, CalendarModel> {
@@ -77,10 +84,10 @@ object Util {
         return calendarMap
     }
 
-    @Nullable
-    public fun getEventFromSlotId(slotId: String): CalendarModel? {
-        return getDaysMap()[slotId]
-    }
+//    @Nullable
+//    public fun getEventFromSlotId(slotId: String): CalendarModel? {
+//        return getDaysMap()[slotId]
+//    }
 
     public fun updateEvent(startSlotId: String, numberOfSlots: Int, event: Event) : Event {
 

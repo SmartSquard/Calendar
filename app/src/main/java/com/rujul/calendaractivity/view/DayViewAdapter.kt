@@ -1,6 +1,7 @@
 package com.rujul.calendaractivity.view
 
 import android.content.ClipData
+import android.content.Context
 import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
@@ -16,10 +17,12 @@ import com.rujul.calendaractivity.model.CalendarModel
 import com.rujul.calendaractivity.model.Event
 import com.rujul.calendaractivity.util.Util
 
-public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(), EventDragHandler.EventDragListener {
+public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(),
+    EventDragHandler.EventDragListener {
+
+    private var mContext: Context? = null
 
     private val mOnLogClickListener = View.OnLongClickListener {
-        Toast.makeText(it.context, "Long pressed !", Toast.LENGTH_LONG).show()
         val view = it
         val data = ClipData.newPlainText("", "")
         val shadowBuilder = DragShadowBuilder(view)
@@ -38,6 +41,7 @@ public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(), EventDragHand
 
     override fun onBindViewHolder(holder: BaseBindingViewHolder, position: Int) {
         val binding = holder.binding as ItemDayViewBinding
+        mContext = holder.binding.root.context
         val calendarModel = items[holder.adapterPosition]
         updateUI(binding, calendarModel)
 
@@ -45,7 +49,6 @@ public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(), EventDragHand
         binding.root.tag = calendarModel.slotId
         binding.eventName.tag = calendarModel.slotId
 
-//        binding.eventName.setOnTouchListener(mOnTouchListener)
         binding.eventName.setOnLongClickListener(mOnLogClickListener)
         binding.eventName.setOnDragListener(EventDragHandler(this))
         binding.root.setOnDragListener(EventDragHandler(this))
@@ -67,12 +70,7 @@ public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(), EventDragHand
         }
     }
 
-    override fun eventDragged(oldSlotId: String, newSlotId: String, event: Event) {
-
-    }
-
     override fun eventChange(sourceTag: String, targetTag: String) {
-//        val calendarModel = Util.getEventFromSlotId(sourceTag)
         val calendarModel = getCalendarModel(sourceTag) ?: return
         val eventString = Gson().toJson(calendarModel.event)
         val oldEvent = Gson().fromJson<Event>(eventString, Event::class.java)
@@ -80,7 +78,7 @@ public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(), EventDragHand
         moveAndUpdateEvent(oldEvent, targetTag)
     }
 
-    fun getCalendarModel(sourceTag: String): CalendarModel? {
+    private fun getCalendarModel(sourceTag: String): CalendarModel? {
         for (calendarModel in items) {
             if (calendarModel.slotId.equals(sourceTag)) {
                 return calendarModel
@@ -91,11 +89,11 @@ public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(), EventDragHand
 
     private fun moveAndUpdateEvent(oldEvent: Event?, newStartSlotId: String) {
         var nextSlotIsBooked = false
-        var numberOfSlots = 0;
+        var numberOfSlots = 0
+
         // remove old event from object
         for (calendarModel in items) {
             if (oldEvent?.getEndTimeId().equals(calendarModel.slotId)) {
-                numberOfSlots += 1
                 calendarModel.event = null
                 nextSlotIsBooked = false
             }
@@ -114,25 +112,29 @@ public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(), EventDragHand
     }
 
 
-    public fun addEvents(event: Event) {
-        var needToAdd = false
-        for (calendarModel in items) {
-            val slotId = calendarModel.slotId!!
-            val eventStartId = event.getStartTimeId()!! // 2300
-            val eventEndId = event.getEndTimeId()!! // 0100
+    private fun addEvents(event: Event) {
+        if (Util.isValidSlot(event, items)) {
+            var needToAdd = false
+            for (calendarModel in items) {
+                val slotId = calendarModel.slotId!!
+                val eventStartId = event.getStartTimeId()!! // 2300
+                val eventEndId = event.getEndTimeId()!! // 0100
 
 
-            if (eventEndId == slotId && needToAdd) {
-                needToAdd = false
+                if (eventEndId == slotId && needToAdd) {
+                    needToAdd = false
+                }
+
+                if (eventStartId == slotId || needToAdd) {
+                    calendarModel.event = event
+                    needToAdd = true
+                }
+
             }
-
-            if (eventStartId == slotId || needToAdd) {
-                calendarModel.event = event
-                needToAdd = true
-            }
-
+            notifyDataSetChanged()
+        } else {
+            Toast.makeText(mContext, "Invalid Event", Toast.LENGTH_LONG).show()
         }
-        notifyDataSetChanged()
     }
 
 }
