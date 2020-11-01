@@ -41,9 +41,15 @@ abstract class BaseBindingAdapter<T> : RecyclerView.Adapter<BaseBindingViewHolde
 
     fun setItem(item: ArrayList<T>) {
         items = item
+        duplicateItems(items)
+        duplicateMaps(items)
         if (filterable) allItems = item
         notifyDataSetChanged()
     }
+
+    abstract fun duplicateItems(items: ArrayList<T>)
+
+    abstract fun duplicateMaps(items: ArrayList<T>)
 
     fun addItems(item: ArrayList<T>) {
         items.addAll(item)

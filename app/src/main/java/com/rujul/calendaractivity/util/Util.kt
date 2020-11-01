@@ -45,8 +45,8 @@ object Util {
 
     fun getId(calendar: Calendar): String {
         val numberFormat: NumberFormat = DecimalFormat("0000")
-        val hour = (calendar.get(Calendar.HOUR_OF_DAY))
-        val minutes = (calendar.get(Calendar.MINUTE))
+        val hour = (calendar.get(Calendar.HOUR_OF_DAY)) //23
+        val minutes = (calendar.get(Calendar.MINUTE)) //59
         val result = (hour * 100) + minutes
         return numberFormat.format(result)
     }

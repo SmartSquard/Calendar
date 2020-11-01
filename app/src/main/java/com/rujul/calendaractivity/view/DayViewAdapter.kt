@@ -10,18 +10,21 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.databinding.ViewDataBinding
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.rujul.calendaractivity.base.BaseBindingAdapter
 import com.rujul.calendaractivity.base.BaseBindingViewHolder
 import com.rujul.calendaractivity.databinding.ItemDayViewBinding
 import com.rujul.calendaractivity.model.CalendarModel
 import com.rujul.calendaractivity.model.Event
 import com.rujul.calendaractivity.util.Util
+import java.lang.reflect.Type
 
 public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(),
     EventDragHandler.EventDragListener {
 
     private var mContext: Context? = null
-
+    private lateinit var map : HashMap<String,CalendarModel>
+    private lateinit var duplicateItems : ArrayList<CalendarModel>
     private val mOnLogClickListener = View.OnLongClickListener {
         val view = it
         val data = ClipData.newPlainText("", "")
@@ -34,6 +37,19 @@ public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(),
         return@OnLongClickListener true
     }
 
+    override fun duplicateItems(items: ArrayList<CalendarModel>) {
+        duplicateItems = arrayListOf<CalendarModel>()
+        val itemsStr = Gson().toJson(items)
+        val type = object : TypeToken<List<CalendarModel>>() {}.type
+        duplicateItems = Gson().fromJson<ArrayList<CalendarModel>>(itemsStr, type)
+    }
+
+    override fun duplicateMaps(items: ArrayList<CalendarModel>) {
+        map = hashMapOf()
+        for(calendarModel in items){
+            map[calendarModel.slotId] = calendarModel
+        }
+    }
 
     override fun bind(inflater: LayoutInflater, parent: ViewGroup, viewType: Int): ViewDataBinding {
         return ItemDayViewBinding.inflate(inflater, parent, false)
@@ -79,20 +95,18 @@ public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(),
     }
 
     private fun getCalendarModel(sourceTag: String): CalendarModel? {
-        for (calendarModel in items) {
-            if (calendarModel.slotId.equals(sourceTag)) {
-                return calendarModel
-            }
-        }
-        return null
+        return map.get(sourceTag)
     }
 
     private fun moveAndUpdateEvent(oldEvent: Event?, newStartSlotId: String) {
         var nextSlotIsBooked = false
         var numberOfSlots = 0
+        val temo = map.get(oldEvent?.getStartTimeId())
+
 
         // remove old event from object
-        for (calendarModel in items) {
+        for (calendarModel in duplicateItems) {
+
             if (oldEvent?.getEndTimeId().equals(calendarModel.slotId)) {
                 calendarModel.event = null
                 nextSlotIsBooked = false
@@ -104,16 +118,17 @@ public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(),
                 nextSlotIsBooked = true
             }
         }
-        notifyDataSetChanged()
 
         // update startTime and endTime of event
         val updateEvent = Util.updateEvent(newStartSlotId, numberOfSlots, oldEvent!!)
-        addEvents(updateEvent)
+        addEvents(updateEvent, duplicateItems)
     }
 
 
-    private fun addEvents(event: Event) {
+    private fun addEvents(event: Event, customItems: ArrayList<CalendarModel>) {
         if (Util.isValidSlot(event, items)) {
+            items = customItems
+
             var needToAdd = false
             for (calendarModel in items) {
                 val slotId = calendarModel.slotId!!
@@ -134,6 +149,7 @@ public class DayViewAdapter : BaseBindingAdapter<CalendarModel>(),
             notifyDataSetChanged()
         } else {
             Toast.makeText(mContext, "Invalid Event", Toast.LENGTH_LONG).show()
+            notifyDataSetChanged()
         }
     }
 
